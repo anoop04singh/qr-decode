@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 from PIL import Image
 from pyzbar.pyzbar import decode as pyzbar_decode
 import zlib
 import base64
 import io
+import os
 
 app = Flask(__name__)
 
@@ -11,11 +12,11 @@ def decode_secure_qr(qr_str):
     """
     Decodes a UIDAI secure QR code from a base10-encoded string (skipping signature verification).
     Steps:
-      1. Convert the base10 string to an integer, then to a byte array.
+      1. Convert the base10 string to an integer and then to a byte array.
       2. Decompress the byte array using zlib.
       3. Extract 16 text fields (delimited by byte value 255) using ISO-8859-1 encoding.
       4. Determine tail length (256 bytes signature + optional mobile/email fields based on the indicator).
-      5. Extract photo bytes (between last text delimiter and start of tail) and encode in base64.
+      5. Extract photo bytes (between the last text delimiter and the start of the tail) and encode them in base64.
       6. Extract mobile/email fields (if present) by reversing their fixed-size byte order and converting to hex.
     Returns a dictionary with the decoded fields.
     """
@@ -68,9 +69,9 @@ def decode_secure_qr(qr_str):
     
     tail_extra = 0
     if indicator == 3:
-        tail_extra = 64  # Both mobile and email present (32 bytes each)
+        tail_extra = 64
     elif indicator in [1, 2]:
-        tail_extra = 32  # Only one present
+        tail_extra = 32
     
     tail_length = 256 + tail_extra
     tail_start = len(decompressed) - tail_length
@@ -106,7 +107,7 @@ def upload_qr():
     """
     Expects a multipart/form-data POST with file field 'qr_image'.
     Uses pyzbar to decode the QR image (which contains a very large base10 string),
-    then decodes it using the UIDAI secure QR code steps (signature verification is skipped).
+    then decodes it using the UIDAI secure QR steps (signature verification is skipped).
     Returns the decoded data in JSON.
     """
     if 'qr_image' not in request.files:
@@ -135,7 +136,5 @@ def upload_qr():
         return jsonify({"error": str(e)}), 400
 
 if __name__ == '__main__':
-    # For deployment on Render or Vercel, ensure the web server runs on the port provided by the environment.
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
