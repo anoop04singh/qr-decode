@@ -1,0 +1,30 @@
+ Convert the base10 value of Secure QR code into Big Integer.
+ Convert the Big Integer into byte array.
+ Decompress the byte array.
+ Read the value of byte array from index 0 to till first delimiter value “255”
+and convert this byte array value into string with encoding “ISO-8859-1”.
+We will get the Email_mobile_present_bit_indicator_value as 0, 1, 2 or 3.
+ Read the value of byte array from next index (index will be last presence
+of delimiter value +1) till we hit the next delimiter value “255” and
+populate the appropriate field..
+Version 0 Secure QR Code
+© UIDAI, 2011-2019 http://uidai.gov.in/ Page 6 of 8
+ Repeat step 5 till we get value of the VTC field.
+ Now read the value of signature from end (Byte array length -1) till 256
+byte in reverse order. Signature size is of fix length of 256.
+ Post getting signature value, check the value of
+Email_mobile_present_bit_indicator_value:
+o if its 3 then first read mobile from index (Byte array length – 1-
+256) and then email from index (Byte array length – 1- 256- 32) in
+reverse order. Each value will be of fix size of 32 byte.
+o If Email_mobile_present_bit_indicator_value is 1 then only mobile
+is present.
+o If Email_mobile_present_bit_indicator_value is 2 then only email is
+present.
+o If Email_mobile_present_bit_indicator_value is 0 then no mobile or
+email present.
+ Email and Mobile value will available in byte. Convert into Hexadecimal
+String.
+ At last read the photo from index (VTC delimeter value of “255” + 1) to
+index (Byte array length – 1- 256 – (if mobile present then -32 if email
+present then -32 ))
